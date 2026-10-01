@@ -6,6 +6,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <title>HexRNG</title>
 
+
 <style>
     * {
         box-sizing: border-box;
@@ -17,29 +18,254 @@
         font-family: Arial, sans-serif;
         background: #10131a;
         color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
         padding: 35px 20px;
     }
 
-    h1 {
+    /* =========================
+       MAIN THREE-COLUMN LAYOUT
+       ========================= */
+
+    .game-layout {
+        width: min(1500px, 100%);
+        min-height: calc(100vh - 70px);
+        margin: 0 auto;
+
+        display: grid;
+        grid-template-columns:
+            360px
+            minmax(450px, 800px)
+            360px;
+
+        gap: 25px;
+
+        /* Vertically center each column */
+        align-items: center;
+    }
+
+    /* =========================
+       LEFT COLUMN
+       ========================= */
+
+    .left-column {
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        /* Space between formula and hierarchy */
+        gap: 25px;
+
+        /* The entire stack is centered */
+        justify-content: center;
+
+        text-align: center;
+    }
+
+    /* =========================
+       GLASS BOXES
+       ========================= */
+
+    .formula-box,
+    .hierarchy-box,
+    .game-container,
+    .achievements-panel {
+        background: rgba(23, 28, 38, 0.78);
+
+        border: 1px solid rgba(80, 94, 118, 0.65);
+        border-radius: 16px;
+
+        box-shadow:
+            0 8px 30px rgba(0, 0, 0, .25),
+            inset 0 1px 0 rgba(255, 255, 255, .035);
+
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* =========================
+       FORMULA BOX
+       ========================= */
+
+    .formula-box {
+        width: 100%;
+        min-height: 250px;
+
+        padding: 20px 22px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        text-align: center;
+    }
+
+    .formula-title {
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        color: #8f9aad;
+
+        margin-bottom: 16px;
+
+        text-align: center;
+    }
+
+    .formula-main {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 10px;
+
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 18px;
+
+        color: #f1f3f7;
+
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .formula-label {
+        font-style: italic;
+    }
+
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+
+        line-height: 1.15;
+    }
+
+    .fraction .numerator {
+        padding: 0 10px 5px;
+
+        border-bottom: 2px solid #c9ced8;
+    }
+
+    .fraction .denominator {
+        padding-top: 5px;
+        font-size: 15px;
+    }
+
+    .numerator-inline {
+        font-style: italic;
+    }
+
+    .condition {
+        font-family: Arial, sans-serif;
+
+        font-size: 11px;
+        color: #71e08a;
+        font-weight: bold;
+    }
+
+    .formula-divider {
+        margin: 12px 0;
+
+        text-align: center;
+
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+
+        color: #737d8e;
+    }
+
+    /* =========================
+       RATING HIERARCHY
+       ========================= */
+
+    .hierarchy-box {
+        width: 100%;
+
+        padding: 20px 18px;
+
+        text-align: center;
+    }
+
+    .hierarchy {
+        display: flex;
+        flex-direction: column;
+
+        gap: 3px;
+
+        max-height: 500px;
+        overflow-y: auto;
+
+        padding-right: 4px;
+    }
+
+    .hierarchy div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        padding: 5px 8px;
+
+        border-radius: 6px;
+
+        background: rgba(255, 255, 255, .025);
+
+        font-size: 12px;
+    }
+
+    .hierarchy span {
+        font-weight: bold;
+        letter-spacing: .5px;
+    }
+
+    .hierarchy b {
+        color: #8f9aad;
+        font-size: 11px;
+    }
+
+    /* =========================
+       MAIN RNG BOX
+       ========================= */
+
+    .game-container {
+        width: 100%;
+        min-width: 0;
+
+        padding: 30px 25px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        text-align: center;
+    }
+
+    .game-container h1 {
         margin: 0 0 25px;
         font-size: 32px;
     }
 
+    /* =========================
+       RATING STAT
+       ========================= */
+
     .stats {
         display: flex;
+        justify-content: center;
+
         gap: 12px;
+
         margin-bottom: 25px;
     }
 
     .stat {
         min-width: 130px;
+
         padding: 12px 20px;
+
         border-radius: 12px;
+
         background: #1d2330;
         border: 1px solid #30394b;
+
         text-align: center;
     }
 
@@ -50,33 +276,57 @@
 
     .stat .label {
         font-size: 11px;
+
         color: #9ba5b5;
+
         margin-top: 3px;
+
         text-transform: uppercase;
         letter-spacing: 1px;
     }
 
+    /* =========================
+       CARDS
+       ========================= */
+
     #cards {
+        width: 100%;
+
         display: flex;
         justify-content: center;
+        align-items: center;
+
         gap: 15px;
+
         min-height: 150px;
+
         margin-bottom: 25px;
+
         flex-wrap: wrap;
     }
 
     .card {
         width: 115px;
         height: 150px;
-        background: linear-gradient(145deg, #252d3c, #171c26);
+
+        background: linear-gradient(
+            145deg,
+            #252d3c,
+            #171c26
+        );
+
         border: 2px solid #414c61;
         border-radius: 18px;
+
         display: flex;
         align-items: center;
         justify-content: center;
+
         font-size: 55px;
         font-weight: bold;
-        box-shadow: 0 10px 30px rgba(0,0,0,.3);
+
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+
         animation: appear .35s ease-out;
     }
 
@@ -85,25 +335,88 @@
             opacity: 0;
             transform: translateY(-15px) scale(.9);
         }
+
         to {
             opacity: 1;
             transform: translateY(0) scale(1);
         }
     }
 
+    /* =========================
+       SCORE
+       ========================= */
+
+    .total {
+        margin-top: 25px;
+
+        font-size: 25px;
+        font-weight: bold;
+
+        text-align: center;
+    }
+
+    /* =========================
+       BUTTON
+       ========================= */
+
+    button {
+        margin-top: 20px;
+
+        padding: 13px 28px;
+
+        border: none;
+        border-radius: 10px;
+
+        background: #5865f2;
+        color: white;
+
+        font-size: 16px;
+        font-weight: bold;
+
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #6975ff;
+    }
+
+    /* =========================
+       ACHIEVEMENTS
+       ========================= */
+
+    .achievements-panel {
+        width: 100%;
+
+        padding: 20px;
+
+        max-height: calc(100vh - 70px);
+
+        overflow-y: auto;
+
+        text-align: center;
+    }
+
     #achievements {
-        width: min(800px, 100%);
+        width: 100%;
+
         display: flex;
         flex-direction: column;
+
         gap: 10px;
+
+        text-align: left;
     }
 
     .achievement {
         position: relative;
+
         background: #1b212c;
+
         border: 1px solid #30394a;
         border-radius: 13px;
-        padding: 17px 75px 17px 20px;
+
+        padding: 17px 60px 17px 20px;
+
         animation: popup .4s ease-out;
     }
 
@@ -112,6 +425,7 @@
             opacity: 0;
             transform: translateY(-8px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -125,67 +439,240 @@
 
     .achievement p {
         margin: 0;
+
         color: #aeb7c7;
         line-height: 1.4;
+
         font-size: 14px;
     }
 
     .points {
         position: absolute;
+
         right: 15px;
         top: 15px;
+
         font-size: 18px;
         font-weight: bold;
+
         color: #71e08a;
     }
 
-    .total {
-        margin-top: 25px;
-        font-size: 25px;
-        font-weight: bold;
+    /* =========================
+       SCROLLBARS
+       ========================= */
+
+    .hierarchy::-webkit-scrollbar,
+    .achievements-panel::-webkit-scrollbar {
+        width: 5px;
     }
 
-    button {
-        margin-top: 20px;
-        padding: 13px 28px;
-        border: none;
+    .hierarchy::-webkit-scrollbar-track,
+    .achievements-panel::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .hierarchy::-webkit-scrollbar-thumb,
+    .achievements-panel::-webkit-scrollbar-thumb {
+        background: #394355;
         border-radius: 10px;
-        background: #5865f2;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
     }
 
-    button:hover {
-        background: #6975ff;
+    /* =========================
+       TABLET
+       ========================= */
+
+    @media (max-width: 1200px) {
+        .game-layout {
+            grid-template-columns:
+                300px
+                minmax(400px, 1fr)
+                300px;
+
+            gap: 15px;
+        }
+    }
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @media (max-width: 850px) {
+        .game-layout {
+            min-height: auto;
+
+            grid-template-columns: 1fr;
+
+            gap: 20px;
+        }
+
+        .left-column {
+            justify-content: flex-start;
+        }
+
+        .achievements-panel {
+            max-height: none;
+            overflow: visible;
+        }
+
+        .game-container {
+            order: -1;
+        }
+    }
+
+    /* =========================
+       SMALL MOBILE
+       ========================= */
+
+    @media (max-width: 500px) {
+        body {
+            padding: 20px 12px;
+        }
+
+        .game-container h1 {
+            font-size: 27px;
+        }
+
+        .card {
+            width: 90px;
+            height: 120px;
+            font-size: 45px;
+        }
+
+        .formula-main {
+            font-size: 16px;
+            white-space: normal;
+        }
     }
 </style>
-</head>
 
+</head>
 <body>
 
-<h1>Base 16 RNG</h1>
+<div class="game-layout">
 
-<div class="stats">
+    <!-- LEFT COLUMN -->
+    <div class="left-column">
 
-    <div class="stat">
-        <div class="value" id="ratingTitle">—</div>
-        <div class="label">Rating</div>
+        <div class="formula-box">
+            <div class="formula-title">SCORING FORMULA</div>
+
+            <div class="formula-main">
+                <span class="formula-label">Score =</span>
+
+                <span class="fraction">
+                    <span class="numerator">
+                        10 × Total Points
+                    </span>
+                    <span class="denominator">
+                        log₁₀(Card Count + 0.5)
+                    </span>
+                </span>
+
+                <span class="condition">
+                    Card Count &lt; 4
+                </span>
+            </div>
+
+            <div class="formula-divider">or</div>
+
+            <div class="formula-main">
+                <span class="formula-label">Score =</span>
+
+                <span class="numerator-inline">
+                    10 × Total Points
+                </span>
+
+                <span class="condition">
+                    Card Count = 4
+                </span>
+            </div>
+        </div>
+
+
+        <div class="hierarchy-box">
+
+            <div class="formula-title">
+                RATING HIERARCHY
+            </div>
+
+            <div class="hierarchy">
+
+                <div><span>APEX</span><b>2500+</b></div>
+                <div><span>ASCENDANT</span><b>2000+</b></div>
+                <div><span>DIVINE</span><b>1650+</b></div>
+                <div><span>ARCANE</span><b>1400+</b></div>
+                <div><span>TITAN</span><b>1200+</b></div>
+                <div><span>PHENOMENAL</span><b>1050+</b></div>
+                <div><span>EXPERT</span><b>925+</b></div>
+                <div><span>VETERAN</span><b>825+</b></div>
+                <div><span>SCARCE</span><b>735+</b></div>
+                <div><span>UNUSUAL</span><b>655+</b></div>
+                <div><span>NOTABLE</span><b>585+</b></div>
+                <div><span>STANDARD</span><b>525+</b></div>
+                <div><span>CAPABLE</span><b>470+</b></div>
+                <div><span>ORDINARY</span><b>420+</b></div>
+                <div><span>COMMON</span><b>375+</b></div>
+                <div><span>ROOKIE</span><b>335+</b></div>
+                <div><span>INITIATE</span><b>300+</b></div>
+                <div><span>LEARNER</span><b>270+</b></div>
+                <div><span>NOVICE</span><b>245+</b></div>
+                <div><span>UNRANKED</span><b>220+</b></div>
+                <div><span>UNRATED</span><b>&lt;220</b></div>
+
+            </div>
+        </div>
+
     </div>
+
+
+    <!-- CENTER COLUMN -->
+    <main class="game-container">
+
+        <h1>Base 16 RNG</h1>
+
+        <div class="stats">
+
+            <div class="stat">
+                <div class="value" id="ratingTitle">—</div>
+                <div class="label">Rating</div>
+            </div>
+
+        </div>
+
+        <div id="cards"></div>
+
+        <div class="total">
+            Score: <span id="score">0</span>
+        </div>
+
+        <button onclick="generate()">
+            Generate Again
+        </button>
+
+    </main>
+
+
+    <!-- RIGHT COLUMN -->
+    <div class="achievements-panel">
+
+        <div class="formula-title">
+            ACHIEVEMENTS
+        </div>
+
+        <div id="achievements"></div>
+
+    </div>
+
 </div>
 
-<div id="cards"></div>
 
-<div id="achievements"></div>
-
-<div class="total">
-    Score: <span id="score">0</span>
-</div>
-
-<button onclick="generate()">Generate Again</button>
+<script>
 
 
+</script>
+
+</body>
 <script>
 
 const SYMBOLS = "123456789ABCDEFG";
