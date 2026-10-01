@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>HexRNG</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        background: #10131a;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 35px 20px;
+    }
+
+    h1 {
+        margin: 0 0 25px;
+        font-size: 32px;
+    }
+
+    .stats {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .stat {
+        min-width: 130px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        background: #1d2330;
+        border: 1px solid #30394b;
+        text-align: center;
+    }
+
+    .stat .value {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .stat .label {
+        font-size: 11px;
+        color: #9ba5b5;
+        margin-top: 3px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    #cards {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        min-height: 150px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .card {
+        width: 115px;
+        height: 150px;
+        background: linear-gradient(145deg, #252d3c, #171c26);
+        border: 2px solid #414c61;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 55px;
+        font-weight: bold;
+        box-shadow: 0 10px 30px rgba(0,0,0,.3);
+        animation: appear .35s ease-out;
+    }
+
+    @keyframes appear {
+        from {
+            opacity: 0;
+            transform: translateY(-15px) scale(.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    #achievements {
+        width: min(800px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .achievement {
+        position: relative;
+        background: #1b212c;
+        border: 1px solid #30394a;
+        border-radius: 13px;
+        padding: 17px 75px 17px 20px;
+        animation: popup .4s ease-out;
+    }
+
+    @keyframes popup {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .achievement h3 {
+        margin: 0 0 5px;
+        font-size: 17px;
+    }
+
+    .achievement p {
+        margin: 0;
+        color: #aeb7c7;
+        line-height: 1.4;
+        font-size: 14px;
+    }
+
+    .points {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #71e08a;
+    }
+
+    .total {
+        margin-top: 25px;
+        font-size: 25px;
+        font-weight: bold;
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 13px 28px;
+        border: none;
+        border-radius: 10px;
+        background: #5865f2;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #6975ff;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Base 16 RNG</h1>
+
+<div class="stats">
+
+    <div class="stat">
+        <div class="value" id="ratingTitle">—</div>
+        <div class="label">Rating</div>
+    </div>
+</div>
+
+<div id="cards"></div>
+
+<div id="achievements"></div>
+
+<div class="total">
+    Score: <span id="score">0</span>
+</div>
+
+<button onclick="generate()">Generate Again</button>
+
+
+<script>
+
+const SYMBOLS = "123456789ABCDEFG";
+
+// ---------------------------------------------------------
+// RANDOM CARD COUNT
+// ---------------------------------------------------------
+
+function getCardCount() {
+    const r = Math.random() * 100;
+
+    if (r < 90) return 4;       // 90%
+    if (r < 98) return 3;       // 8%
+    if (r < 99.9) return 2;     // 1.9%
+    return 1;                   // 0.1%
+}
+
+
+// ---------------------------------------------------------
+// RANDOM SYMBOL
+// ---------------------------------------------------------
+
+function randomSymbol() {
+    return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+}
+
+
+// ---------------------------------------------------------
+// PRIME CHECK
+// ---------------------------------------------------------
+
+function isPrime(n) {
+    if (n < 2) return false;
+
+    if (n === 2) return true;
+    if (n % 2 === 0) return false;
+
+    for (let i = 3; i * i <= n; i += 2) {
+        if (n % i === 0) return false;
+    }
+
+    return true;
+}
+
+
+// ---------------------------------------------------------
+// PALINDROME
+// ---------------------------------------------------------
+
+function isPalindrome(str) {
+    return str === str.split("").reverse().join("");
+}
+
+
+// ---------------------------------------------------------
+// BINARY PALINDROME
+// ---------------------------------------------------------
+
+function binaryPalindrome(hexString) {
+    const decimal = parseInt(hexString, 16);
+    const binary = decimal.toString(2);
+
+    return isPalindrome(binary);
+}
+
+
+// ---------------------------------------------------------
+// LETTER / DIGIT HELPERS
+// ---------------------------------------------------------
+
+function lettersOnly(str) {
+    return str.replace(/[0-9]/g, "");
+}
+
+function digitsOnly(str) {
+    return str.replace(/[A-Z]/g, "");
+}
+
+
+// ---------------------------------------------------------
+// WORD LIST
+// ---------------------------------------------------------
+
+const WORDS = [
+    "BAD",
+    "CAB",
+    "DAD",
+    "DECADE",
+    "ACE",
+    "BED",
+    "FACE",
+    "FEED",
+    "DEAF",
+    "CAFE",
+    "BEAD",
+    "DECADE",
+    "BEEF",
+    "DEED",
+    "ABED",
+    "AGED",
+    "FADE",
+    "FEED",
+    "DECAF",
+    "DECADE"
+];
+
+
+// ---------------------------------------------------------
+// ACHIEVEMENT ENGINE
+// ---------------------------------------------------------
+
+function getAchievements(cards) {
+
+    const sequence = cards.join("");
+    const achievements = [];
+
+    const digits = sequence.match(/[1-9]/g) || [];
+    const letters = sequence.match(/[A-G]/g) || [];
+
+    const digitString = digits.join("");
+    const letterString = letters.join("");
+
+    const decimalValue = parseInt(
+        sequence.replace(/[A-G]/g, c =>
+            (parseInt(c, 16)).toString()
+        ),
+        16
+    );
+
+    function add(title, description, points) {
+        achievements.push({
+            title,
+            description,
+            points
+        });
+    }
+
+
+    // -----------------------------------------------------
+    // BASIC ACHIEVEMENTS
+    // -----------------------------------------------------
+
+    if (digits.length > 0) {
+        add(
+            "Numerical Presence",
+            `The sequence contains ${digits.length} number${digits.length > 1 ? "s" : ""}.`,
+            digits.length * 2
+        );
+    }
+
+    if (letters.length > 0) {
+        add(
+            "Letter Collector",
+            `The sequence contains ${letters.length} hexadecimal letter${letters.length > 1 ? "s" : ""}.`,
+            letters.length * 2
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // PALINDROMES
+    // -----------------------------------------------------
+
+    if (binaryPalindrome(sequence)) {
+        add(
+            "Binary Mirror",
+            `The hexadecimal number ${sequence} becomes a palindrome when written in base 2.`,
+            30
+        );
+    }
+
+    if (isPalindrome(decimalValue.toString())) {
+        add(
+            "Decimal Mirror",
+            `The decimal representation ${decimalValue} reads identically forwards and backwards.`,
+            25
+        );
+    }
+
+    if (isPalindrome(sequence)) {
+        add(
+            "Hexadecimal Mirror",
+            `The hexadecimal sequence ${sequence} is itself a palindrome.`,
+            20
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // SPECIAL NUMBERS
+    // -----------------------------------------------------
+
+    if (sequence.includes("314")) {
+        add(
+            "Pi Hunter",
+            "The sequence contains 314 in the correct order — a reference to π.",
+            20
+        );
+    }
+
+    if (sequence.includes("271")) {
+        add(
+            "Euler Hunter",
+            "The sequence contains 271 in the correct order — the beginning of e's decimal expansion.",
+            20
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // ALL CHARACTERS
+    // -----------------------------------------------------
+
+    if (digits.length === 9) {
+        add(
+            "Digit Hoarder",
+            "Every possible digit from 1 through 9 appears.",
+            10
+        );
+    }
+
+    if (
+        ["A","B","C","D","E","F","G"].every(x =>
+            sequence.includes(x)
+        )
+    ) {
+        add(
+            "Alphabet of Hex",
+            "Every available hexadecimal-style letter from A through G appears.",
+            10
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // ORDER
+    // -----------------------------------------------------
+
+    if (digits.length >= 2) {
+
+        let ascending = true;
+        let descending = true;
+
+        for (let i = 1; i < digits.length; i++) {
+            if (+digits[i] <= +digits[i-1])
+                ascending = false;
+
+            if (+digits[i] >= +digits[i-1])
+                descending = false;
+        }
+
+        if (ascending) {
+            add(
+                "Ascending Digits",
+                "Every digit appears in strictly increasing order.",
+                15
+            );
+        }
+
+        if (descending) {
+            add(
+                "Descending Digits",
+                "Every digit appears in strictly decreasing order.",
+                15
+            );
+        }
+    }
+
+
+    // -----------------------------------------------------
+    // PRIME
+    // -----------------------------------------------------
+
+    if (
+        sequence.length > 0 &&
+        /^[1-9]+$/.test(sequence) &&
+        isPrime(parseInt(sequence, 10))
+    ) {
+        add(
+            "Prime Number",
+            `${sequence} is a prime number in base 10.`,
+            50
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // REPETITION
+    // -----------------------------------------------------
+
+    if (new Set(sequence).size === 1) {
+        add(
+            "One Trick Pony",
+            `Every card is the same symbol: ${sequence[0]}.`,
+            15
+        );
+    }
+
+    if (sequence.length >= 3 &&
+        sequence.split("").every((x, i) =>
+            i === 0 || x === sequence[i - 1]
+        )) {
+        add(
+            "Perfect Repetition",
+            "The entire sequence consists of one repeated symbol.",
+            25
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // DOUBLES / TRIPLES
+    // -----------------------------------------------------
+
+    if (/(.)\1/.test(sequence)) {
+        add(
+            "Double Trouble",
+            "Two identical symbols appear consecutively.",
+            8
+        );
+    }
+
+    if (/(.)\1\1/.test(sequence)) {
+        add(
+            "Triple Threat",
+            "Three identical symbols appear consecutively.",
+            20
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // ALTERNATING
+    // -----------------------------------------------------
+
+    if (
+        sequence.length >= 4 &&
+        sequence.split("").every((x, i) =>
+            i < 2 || x === sequence[i % 2]
+        )
+    ) {
+        add(
+            "Alternating Reality",
+            "The sequence follows a perfect two-symbol alternating pattern.",
+            20
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // UNIQUE
+    // -----------------------------------------------------
+
+    if (
+        sequence.length >= 3 &&
+        new Set(sequence).size === sequence.length
+    ) {
+        add(
+            "No Duplicates",
+            "Every card in the sequence is different.",
+            12
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // HEX-SPECIFIC
+    // -----------------------------------------------------
+
+    if (/^[0-9A-F]+$/.test(sequence)) {
+        add(
+            "Pure Hexadecimal",
+            "The sequence uses only symbols that belong to conventional hexadecimal notation.",
+            5
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // BINARY CONVERSION
+    // -----------------------------------------------------
+
+    if (sequence.length > 0) {
+
+        const binary = parseInt(sequence, 16)
+            .toString(2);
+
+        if (/^1(01)*$/.test(binary)) {
+            add(
+                "Binary Rhythm",
+                `The binary representation ${binary} follows a strict alternating pattern.`,
+                25
+            );
+        }
+
+        if (binary.includes("1111")) {
+            add(
+                "Four Bits of Fury",
+                "The binary representation contains four consecutive 1s.",
+                10
+            );
+        }
+
+        if (/^1+$/.test(binary)) {
+            add(
+                "All Ones",
+                "Every bit in the binary representation is 1.",
+                40
+            );
+        }
+
+        if (/^10+$/.test(binary)) {
+            add(
+                "Power of Two",
+                "The binary representation contains exactly one 1, making the number a power of two.",
+                35
+            );
+        }
+    }
+
+
+    // -----------------------------------------------------
+    // POWER OF TWO
+    // -----------------------------------------------------
+
+    if (decimalValue > 0 &&
+        (decimalValue & (decimalValue - 1)) === 0) {
+
+        add(
+            "Power Player",
+            `${decimalValue} is an exact power of two.`,
+            35
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // PERFECT SQUARE
+    // -----------------------------------------------------
+
+    const root = Math.sqrt(decimalValue);
+
+    if (
+        decimalValue > 0 &&
+        Number.isInteger(root)
+    ) {
+        add(
+            "Perfect Square",
+            `${decimalValue} is a perfect square (${root}²).`,
+            30
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // PERFECT CUBE
+    // -----------------------------------------------------
+
+    const cubeRoot = Math.round(
+        Math.cbrt(decimalValue)
+    );
+
+    if (
+        decimalValue > 0 &&
+        cubeRoot ** 3 === decimalValue
+    ) {
+        add(
+            "Perfect Cube",
+            `${decimalValue} is a perfect cube.`,
+            35
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // FIBONACCI
+    // -----------------------------------------------------
+
+    function isFibonacci(n) {
+        const a = 5 * n * n + 4;
+        const b = 5 * n * n - 4;
+
+        return Number.isInteger(Math.sqrt(a)) ||
+               Number.isInteger(Math.sqrt(b));
+    }
+
+    if (
+        decimalValue > 0 &&
+        isFibonacci(decimalValue)
+    ) {
+        add(
+            "Fibonacci Find",
+            `${decimalValue} belongs to the Fibonacci sequence.`,
+            40
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // ARMSTRONG NUMBER
+    // -----------------------------------------------------
+
+    const decimalString = decimalValue.toString();
+
+    const armstrongSum =
+        decimalString
+        .split("")
+        .reduce(
+            (sum, d) =>
+                sum + Number(d) ** decimalString.length,
+            0
+        );
+
+    if (
+        decimalValue > 0 &&
+        armstrongSum === decimalValue
+    ) {
+        add(
+            "Armstrong Number",
+            `${decimalValue} equals the sum of its digits raised to the number of digits.`,
+            45
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // HARSHAD NUMBER
+    // -----------------------------------------------------
+
+    const digitSum =
+        decimalString
+        .split("")
+        .reduce((a,b) => a + +b, 0);
+
+    if (
+        decimalValue > 0 &&
+        decimalValue % digitSum === 0
+    ) {
+        add(
+            "Harshad Number",
+            `${decimalValue} is divisible by the sum of its decimal digits.`,
+            15
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // WORD ACHIEVEMENTS
+    // -----------------------------------------------------
+
+    if (
+        letterString.length >= 2 &&
+        WORDS.includes(letterString)
+    ) {
+        add(
+            "Word Wizard",
+            `${letterString} forms a dictionary word using all the letters in their original order.`,
+            50
+        );
+    }
+
+    const sortedLetters =
+        letterString.split("").sort().join("");
+
+    const anagram = WORDS.find(word =>
+        word.length === letterString.length &&
+        word.split("").sort().join("") === sortedLetters
+    );
+
+    if (
+        letterString.length >= 2 &&
+        anagram &&
+        anagram !== letterString
+    ) {
+        add(
+            "Anagram Alchemist",
+            `${letterString} can be rearranged to spell "${anagram}".`,
+            40
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // LENGTH ACHIEVEMENTS
+    // -----------------------------------------------------
+
+    if (sequence.length === 4) {
+        add(
+            "Full House",
+            "You managed to generate the maximum four-card sequence.",
+            5
+        );
+    }
+
+    if (sequence.length === 1) {
+        add(
+            "Minimalist",
+            "Only one card appeared. Rare, but extremely short.",
+            25
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // RARE PATTERNS
+    // -----------------------------------------------------
+
+    if (
+        sequence.length >= 4 &&
+        isPalindrome(sequence) &&
+        new Set(sequence).size <= 2
+    ) {
+        add(
+            "Mirror Twins",
+            "A palindrome using no more than two unique symbols.",
+            50
+        );
+    }
+
+    if (
+        sequence.length === 4 &&
+        new Set(sequence).size === 4
+    ) {
+        add(
+            "Four of a Different Kind",
+            "All four cards are completely unique.",
+            20
+        );
+    }
+
+    if (
+        sequence.length >= 3 &&
+        sequence === sequence.split("").reverse().join("")
+    ) {
+        add(
+            "Deep Reflection",
+            "The sequence perfectly mirrors itself.",
+            35
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // ULTRA RARE
+    // -----------------------------------------------------
+
+    if (
+        sequence.length === 4 &&
+        /^[0-9]+$/.test(sequence) &&
+        isPalindrome(sequence) &&
+        isPrime(parseInt(sequence))
+    ) {
+        add(
+            "Prime Mirror",
+            "A four-digit decimal number that is simultaneously prime and palindromic.",
+            100
+        );
+    }
+
+    if (
+        sequence === "1234" ||
+        sequence === "4321"
+    ) {
+        add(
+            "The Chosen Sequence",
+            "You hit one of the two canonical four-digit ordered sequences.",
+            75
+        );
+    }
+
+    if (
+        sequence.length === 4 &&
+        new Set(sequence).size === 1
+    ) {
+        add(
+            "Quadruple Jackpot",
+            "All four cards are identical.",
+            100
+        );
+    }
+
+    if (
+        sequence.length === 4 &&
+        sequence === "AAAA"
+    ) {
+        add(
+            "AAAAAAAA",
+            "Four As. That's it. That's the achievement.",
+            250
+        );
+    }
+
+
+    // -----------------------------------------------------
+    // RANDOM ULTRA-RARE ACHIEVEMENTS
+    // -----------------------------------------------------
+
+    if (Math.random() < 0.002) {
+        add(
+            "Reality Glitch",
+            "The generator decided to be weird. Extremely rare.",
+            500
+        );
+    }
+
+    if (Math.random() < 0.0005) {
+        add(
+            "Statistical Miracle",
+            "An extraordinarily unlikely random event occurred.",
+            1000
+        );
+    }
+
+
+    return achievements;
+}
+
+
+// ---------------------------------------------------------
+// RATING TITLE
+// ---------------------------------------------------------
+
+function getRating(score) {
+
+    if (score >= 2500) return "APEX";
+    if (score >= 2000) return "ASCENDANT";
+    if (score >= 1650) return "DIVINE";
+    if (score >= 1400) return "ARCANE";
+    if (score >= 1200) return "TITAN";
+    if (score >= 1050) return "PHENOMENAL";
+    if (score >= 925)  return "EXPERT";
+    if (score >= 825)  return "VETERAN";
+    if (score >= 735)  return "SCARCE";
+    if (score >= 655)  return "UNUSUAL";
+    if (score >= 585)  return "NOTABLE";
+    if (score >= 525)  return "STANDARD";
+    if (score >= 470)  return "CAPABLE";
+    if (score >= 420)  return "ORDINARY";
+    if (score >= 375)  return "COMMON";
+    if (score >= 335)  return "ROOKIE";
+    if (score >= 300)  return "INITIATE";
+    if (score >= 270)  return "LEARNER";
+    if (score >= 245)  return "NOVICE";
+    if (score >= 220)  return "UNRANKED";
+
+    return "UNRATED";
+}
+
+
+// ---------------------------------------------------------
+// GENERATE
+// ---------------------------------------------------------
+
+function generate() {
+
+    const cardCount = getCardCount();
+
+    const cards = [];
+
+    for (let i = 0; i < cardCount; i++) {
+        cards.push(randomSymbol());
+    }
+
+    // Draw cards
+    const cardsElement = document.getElementById("cards");
+
+    cardsElement.innerHTML = "";
+
+    cards.forEach(symbol => {
+
+        const card = document.createElement("div");
+
+        card.className = "card";
+        card.textContent = symbol;
+
+        cardsElement.appendChild(card);
+    });
+
+
+    // Get achievements
+    const achievements = getAchievements(cards);
+
+    const achievementsElement =
+        document.getElementById("achievements");
+
+    achievementsElement.innerHTML = "";
+
+
+    let total = 0;
+
+    achievements.forEach((achievement, index) => {
+
+        total += achievement.points;
+
+        const popup =
+            document.createElement("div");
+
+        popup.className = "achievement";
+
+        popup.innerHTML = `
+            <div class="points">
+                +${achievement.points}
+            </div>
+
+            <h3>
+                ${achievement.title}
+            </h3>
+
+            <p>
+                ${achievement.description}
+            </p>
+        `;
+
+        popup.style.animationDelay =
+            `${index * 0.07}s`;
+
+        achievementsElement.appendChild(popup);
+    });
+
+
+    // -----------------------------------------------------
+    // FINAL RATING
+    //
+    // "divide the final rating by the number
+    // of cards/10"
+    //
+    // This means:
+    //
+    // score / (cards / 10)
+    //
+    // -----------------------------------------------------
+
+    const finalRating =
+        cardCount < 4
+            ? Math.round(10 * total / Math.log10(cardCount + 0.5))
+            : 10*total;
+
+
+    document.getElementById("score")
+        .textContent = finalRating;
+
+    document.getElementById("ratingTitle")
+        .textContent = getRating(finalRating);
+
+
+    // -----------------------------------------------------
+    // PERCENTAGE
+    // -----------------------------------------------------
+
+    // Percentage based on how close the score is
+    // to the "LEGENDARY" threshold.
+
+    const percentage =
+        Math.min(
+            100,
+            Math.round((finalRating / 1000) * 100)
+        );
+
+    document.getElementById("percentage")
+        .textContent = percentage + "%";
+}
+
+
+// Initial generation
+generate();
+
+</script>
+
+</body>
+</html>
